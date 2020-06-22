@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- 导入校验文件 -->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "E:\IDEAwork\Two\JavaMybatisDemo\src\main\resources\mapper\mybatis-3-mapper.dtd">
+<!-- 映射配置 -->
+<mapper namespace="com.mybatis.dao.StudentMapper">
+
+	<insert id="addStudent" parameterType="student" useGeneratedKeys="true" keyProperty="uuid">
+		insert into student(name,sex,class_uuid) values(#{name},#{sex.k},#{classUuid});
+	</insert>
+
+	<select id="findOne" parameterType="int" resultMap="studMap">
+		select * from student where uuid = #{uuid};
+	</select>
+
+	<select id="findByClassId" parameterType="int" resultMap="studMap">
+		select * from student where class_uuid = #{classId};
+	</select>
+
+	<!--自定义类型处理器-->
+	<resultMap id="studMap" type="student">
+		<result property="uuid" column="uuid"/>
+		<!--自定义处理-->
+		<result typeHandler="com.mybatis.typehandle.MyStringTypeHandle" property="name" column="name" />
+		<!--枚举处理-->
+		<result property="sex" column="sex" typeHandler="com.mybatis.typehandle.SexTypeHandle"/>
+		<result property="classUuid" column="class_uuid" />
+	</resultMap>
+</mapper>

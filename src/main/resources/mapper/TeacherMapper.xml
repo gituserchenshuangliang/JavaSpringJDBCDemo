@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- 导入校验文件 -->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "E:\IDEAwork\Two\JavaMybatisDemo\src\main\resources\mapper\mybatis-3-mapper.dtd">
+<!-- 映射配置 -->
+<mapper namespace="com.mybatis.dao.TeacherMapper">
+    <!-- 新增数据返回主键给Teacher对象-->
+    <insert id="addTeacher" parameterType="Teacher" useGeneratedKeys="true" keyProperty="uuid">
+        <!-- 自定义主键规则-->
+        <!--<selectKey keyProperty="uuid" resultType= "int" order= "BEFORE">
+            &lt;!&ndash; 表为空从1开始,不为空+3创建uuid&ndash;&gt;
+            select if (max(uuid) =null, 1, max(uuid) + 3) from teacher
+        </selectKey>-->
+        insert into teacher(name,age,major,sex,salary) values(#{name},#{age},#{major},#{sex},#{salary});
+    </insert>
+
+    <!--
+    set 元素会动态前置 SET 关键字，同时也会消除无关的逗号，
+    因为用了条件语句之后很可能就会在生成的赋值语句的后面留下这些逗号。
+    等价于：  <trim prefix="SET" suffixOverrides=","></trim>
+    -->
+    <update id="updateTeacher" parameterType="Teacher">
+        update teacher
+        <set>
+            <if test=" name != null and name != '' ">
+                name = #{name},
+            </if>
+            <if test=" age != null and age != 0 ">
+                age = #{age},
+            </if>
+            <if test=" major != null and major != '' ">
+                major = #{major},
+            </if>
+            <if test=" sex != null and sex != '' ">
+                sex = #{sex},
+            </if>
+            <if test=" salary != null and salary != 0 ">
+                salary = #{salary},
+            </if>
+        </set>
+        where uuid = #{uuid};
+    </update>
+
+    <delete id="deleteTeacher" parameterType="int">
+        delete from teacher where uuid = #{uuid};
+    </delete>
+
+    <select id="findOne" parameterType="int" resultMap="teacherMap">
+        select * from teacher where uuid = #{uuid};
+    </select>
+
+    <!--
+        where 元素知道只有在一个以上的if条件有值的情况下才去插入“WHERE”子句。
+        而且，若最后的内容是“AND”或“OR”开头的，where 元素也知道如何将他们去除。
+        等价于： <trim prefix="WHERE" prefixOverrides="AND |OR "></trim>
+        -->
+    <select id="findTeachers" resultType="Teacher">
+        <!-- 参数绑定，处理 -->
+       <bind name="majorLike" value="'%' + maps.major + '%'"/>
+        select * from teacher
+        <where>
+            <if test="maps.name != null and maps.name != '' ">
+                name like concat('%',#{maps.name},'%')
+            </if>
+            <if test="maps.age != null and maps.age != 0 ">
+                and age = #{maps.age}
+            </if>
+            <if test="maps.major != null and maps.major != '' ">
+                and major like #{majorLike}
+            </if>
+            <if test="maps.sex != null and maps.sex != '' ">
+                and sex  = #{maps.sex}
+            </if>
+        </where>
+    </select>
+
+    <select id="findTeacherField" resultType="teacher">
+        select
+        <include refid="field"/>
+        <!-- 使用参数 -->
+        <!--<include refid="fields">
+            <property name="alias" value="teacher"/>
+        </include>-->
+        from teacher
+        <where>
+            <if test="maps.name != null and maps.name != '' ">
+                name like concat('%',#{maps.name},'%')
+            </if>
+            <if test="maps.age != null and maps.age != 0 ">
+                and age = #{maps.age}
+            </if>
+            <if test="maps.major != null and maps.major != '' ">
+                and like major concat('%',#{maps.major},'%')
+            </if>
+            <if test="maps.sex != null and maps.sex != '' ">
+                and sex  = #{maps.sex}
+            </if>
+        </where>
+        <if test="start != null and limit != null">
+            limit #{start},#{limit};
+        </if>
+    </select>
+
+    <select id="findTeachersByIds" parameterType="int" resultMap="teacherMap">
+        select * from teacher where uuid in
+        <foreach collection="ids" item="id" index="i" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+
+    <!--自定义类型处理器-->
+    <resultMap id="teacherMap" type="teacher">
+        <result property="uuid" column="uuid" jdbcType="INTEGER" javaType="int"/>
+        <result property="age" column="age" jdbcType="INTEGER" javaType="int"/>
+        <!--自定义处理-->
+        <result typeHandler="com.mybatis.typehandle.MyStringTypeHandle" property="name" column="name" />
+        <result property="major" column="major" typeHandler="com.mybatis.typehandle.MyStringTypeHandle"/>
+        <!--枚举处理-->
+        <result property="sex" column="sex" typeHandler="com.mybatis.typehandle.MyStringTypeHandle"/>
+        <result property="salary" column="salary" jdbcType="DOUBLE" javaType="double"/>
+    </resultMap>
+
+    <sql id="field">
+        uuid,name,major
+    </sql>
+
+    <sql id="field2">
+        ${alias}_uuid,${alias}_name,${alias}_major
+    </sql>
+</mapper>

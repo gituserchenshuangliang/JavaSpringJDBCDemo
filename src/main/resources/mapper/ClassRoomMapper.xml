@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- 导入校验文件 -->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "E:\IDEAwork\Two\JavaMybatisDemo\src\main\resources\mapper\mybatis-3-mapper.dtd">
+<!-- 映射配置 -->
+<mapper namespace="com.mybatis.dao.ClassRoomMapper">
+    <!--没有任何配置的情况下， MyBatis 系统会开启 级缓存，也就是对
+        Sq!Session 层面的缓存，这个缓存不需要 POJO 对象可序列化（实现 java.io.Serializabl
+        口）。-->
+    <!-- 默认开启一级缓存 ，开启二级缓存 SqlSession对象之间共享相同的缓存 POJO对象需要序列化-->
+    <cache/>
+
+    <!-- 自定义缓存 -->
+    <!--<cache type="com.mybatis.cache.RedisCache">
+        <property name="host" value="localhost"/>
+    </cache>-->
+
+    <select id="findByUuid" parameterType="int" resultMap="clazz">
+        select * from classroom where uuid = #{uuid}
+    </select>
+
+    <!-- 结果集 -->
+    <resultMap id="clazz" type="com.mybatis.entity.ClassRoom">
+        <result property="uuid" column="uuid"/>
+        <result property="name" column="name"/>
+        <!-- 一对一 -->
+        <!--My Batis 支持延迟加载，我们希望一次性把常用的级联数据通过 SQL 直接查询出来，
+            而对于那些不常用的级联数据不要取出，而是等待要用时才取出，这些不常用的级联数据
+            可以采用了延迟加载的功能。-->
+        <!-- fetchTyp:eager和lazy，立即加载数据和延时加载数据 ,前提：开启全局延时开关-->
+        <association fetchType="eager" property="teacher" column="teacher_uuid" select="com.mybatis.dao.TeacherMapper.findOne"/>
+
+        <!-- 一对多 -->
+        <collection fetchType="lazy" property="list" column="uuid" select="com.mybatis.dao.StudentMapper.findByClassId"/>
+    </resultMap>
+</mapper>
